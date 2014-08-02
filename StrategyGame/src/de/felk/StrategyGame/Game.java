@@ -1,16 +1,25 @@
 package de.felk.StrategyGame;
 
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glLoadIdentity;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import org.lwjgl.opengl.Display;
 
-import de.felk.StrategyGame.server.Client;
-import de.felk.StrategyGame.server.Server;
+import de.felk.StrategyGame.network.Connection;
+import de.felk.StrategyGame.network.Server;
+import de.felk.StrategyGame.packets.Packet;
+import de.felk.StrategyGame.packets.PacketChannel;
+import de.felk.StrategyGame.packets.PacketConnectionInfo;
+import de.felk.StrategyGame.packets.PacketMap;
 import de.felk.StrategyGame.world.World;
 import de.felk.StrategyGame.world.WorldGenerator;
-import static org.lwjgl.opengl.GL11.*;
 
 public class Game {
 
@@ -18,16 +27,15 @@ public class Game {
 	private int port = 34543;
 	private boolean stopRequested = false;
 	private Server server;
-	private Client client;
+	private Connection testConnection;
 
 	public Game() {
 
-		server = new Server(port);
-		initLocalConnection();
+		World world = WorldGenerator.getNew(500, MathHelper.getRandomSeed());
+		server = new Server(port, world);
+		connectToLocalServer();
 
 		RenderEngine.init(800, 600);
-
-		world = WorldGenerator.getNew(50, MathHelper.getRandomSeed());
 
 		long lastTime = System.nanoTime();
 		while (!isStopRequested()) {
@@ -36,14 +44,20 @@ public class Game {
 		}
 
 		// cleanup
-		server.interrupt();
-		client.interrupt();
+		server.stopThread();
+		testConnection.close();
 
 	}
 
 	public void mainloop(double time) {
 		if (world == null) {
-			System.out.println("no world");
+			ArrayList<Packet> packets = testConnection.get(PacketChannel.MAP);
+			if (!packets.isEmpty()) {
+				System.out.println("Got MAP Packet! Loading world...");
+				PacketMap packetMap = (PacketMap) packets.get(0);
+				world = new World(packetMap.worldNode);
+				System.out.println("World loaded");
+			}
 		} else {
 			world.update(time);
 		}
@@ -60,14 +74,13 @@ public class Game {
 		}
 	}
 
-	public void initLocalConnection() {
+	public void connectToLocalServer() {
 
 		Socket socket = new Socket();
 		try {
-			System.out.println("now connecting to ::1 ...");
 			socket.connect(new InetSocketAddress("::1", port));
-			System.out.println("did connect to ::1 !");
-			client = new Client(socket);
+			testConnection = new Connection(socket);
+			testConnection.send(new PacketConnectionInfo(1234));
 		} catch (IOException e) {
 			System.out.println("connection to ::1 failed");
 			e.printStackTrace();

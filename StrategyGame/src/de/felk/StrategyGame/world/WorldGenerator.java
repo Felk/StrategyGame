@@ -16,9 +16,9 @@ public class WorldGenerator {
 				float h = (float) (0.5f * (noise.noise(x / 10f, y / 10f) + 1));
 				// h is now between 0 and 1
 
-				if (h < 0.3) {
+				if (h < 0.4) {
 					mat = WorldMaterial.SEA;
-				} else if (h < 0.8) {
+				} else if (h < 0.9) {
 					mat = WorldMaterial.GRASS;
 				} else {
 					mat = WorldMaterial.ROCK;
