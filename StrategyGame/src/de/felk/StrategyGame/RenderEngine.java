@@ -16,7 +16,7 @@ public class RenderEngine {
 			DisplayMode[] displayModes = Display.getAvailableDisplayModes();
 
 			for (DisplayMode mode : displayModes) {
-				//boolean flag1 = mode.getFrequency() == Display.getDisplayMode().getFrequency();
+				// boolean flag1 = mode.getFrequency() == Display.getDisplayMode().getFrequency();
 				boolean flag2 = mode.getBitsPerPixel() == Display.getDisplayMode().getBitsPerPixel();
 				boolean flag3 = mode.getHeight() == height;
 				boolean flag4 = mode.getWidth() == width;
@@ -34,14 +34,15 @@ public class RenderEngine {
 		}
 
 		glViewport(0, 0, displayMode.getWidth(), displayMode.getHeight());
+		
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity(); // Reset The Projection Matrix
-		//glFrustum(0, 1, 0, 1, 0, 1);
-		//glOrtho(0.0D, displayMode.getWidth(), 0, displayMode.getHeight(), 1f, -1f);
-		GLU.gluPerspective(45, displayMode.getWidth() / displayMode.getHeight(), 1, 100);
+		// glFrustum(0, 1, 0, 1, 0, 1);
+		// glOrtho(0.0D, displayMode.getWidth(), 0, displayMode.getHeight(), 1f, -1f);
+		GLU.gluPerspective(45, displayMode.getWidth() / displayMode.getHeight(), 1, 10000);
+		
 		glMatrixMode(GL_MODELVIEW);
-		//glLoadIdentity();
-		glClearColor(0, 0, 0, 0.5f);
+		// glLoadIdentity();
 		
 		Display.setVSyncEnabled(true);
 

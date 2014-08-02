@@ -1,29 +1,20 @@
 package de.felk.StrategyGame.world;
 
-import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11.glBegin;
-import static org.lwjgl.opengl.GL11.glColor4f;
-import static org.lwjgl.opengl.GL11.glDisable;
-import static org.lwjgl.opengl.GL11.glEnable;
-import static org.lwjgl.opengl.GL11.glEnd;
-import static org.lwjgl.opengl.GL11.glRotatef;
-import static org.lwjgl.opengl.GL11.glTexCoord2f;
-import static org.lwjgl.opengl.GL11.glTranslatef;
-import static org.lwjgl.opengl.GL11.glVertex3f;
-
+import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.Display;
 
 import de.felk.NodeFile.NodeFile;
 import de.felk.StrategyGame.RenderHelper;
 import de.felk.StrategyGame.TextureBank;
 import de.felk.StrategyGame.Vector;
+import de.felk.StrategyGame.render.FontAlignment;
+import de.felk.StrategyGame.render.FontRenderer;
 
 public class World {
 
 	private WorldNode[][] nodes;
-	private Vector camPos = new Vector(10, 20, 40);
+	private Vector camPos = new Vector(10, 50, 40);
 
 	public World(WorldNode[][] nodes) {
 		this.nodes = nodes;
@@ -40,32 +31,35 @@ public class World {
 	public void update(double time) {
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_D)) {
-			camPos.addX((float) (100000 * time));
+			camPos.addX((float) (40 * time));
 		}
 		if (Keyboard.isKeyDown(Keyboard.KEY_A)) {
-			camPos.addX((float) (-100000 * time));
+			camPos.addX((float) (-40 * time));
 		}
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_W)) {
-			camPos.addZ((float) (-100000 * time));
+			camPos.addZ((float) (-40 * time));
 		}
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_S)) {
-			camPos.addZ((float) (100000 * time));
+			camPos.addZ((float) (40 * time));
 		}
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
-			camPos.addY((float) (100000 * time));
+			camPos.addY((float) (20 * time));
 		}
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-			camPos.addY((float) (-100000 * time));
+			camPos.addY((float) (-20 * time));
 		}
 
 	}
 
 	public void render() {
-		glRotatef(30, 1, 0, 0);
+		glLoadIdentity();
+		// GLU.gluPerspective(45, Display.getWidth() / Display.getHeight(), 1, 1000);
+		glRotatef(35, 1, 0, 0);
+		//glRotatef(45, 0, 1, 0);
 		glTranslatef(-camPos.getX(), -camPos.getY(), -camPos.getZ());
 		TextureBank.instance.bindTexture("texture.png");
 		glEnable(GL_DEPTH_TEST);
@@ -99,8 +93,29 @@ public class World {
 				glVertex3f(x, hz, z + 1);
 			}
 		}
-		glDisable(GL_TEXTURE_2D);
 		glEnd();
+
+		RenderHelper.enableAlphaMask();
+		glDisable(GL_DEPTH_TEST);
+
+		// switch to orthogonal
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0, Display.getWidth(), Display.getHeight(), 0, 1, -1);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		glColor4f(1f, 0.5f, 0.5f, 1f);
+
+		TextureBank.instance.bindTexture("font.png");
+
+		FontRenderer.renderString("Teststring! Lorem ipsum dolor sit amet, consecetur ...", 10, 10, 32, 0.05f, FontAlignment.LEFT);
+
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+
 	}
 
 	public NodeFile toNode() {

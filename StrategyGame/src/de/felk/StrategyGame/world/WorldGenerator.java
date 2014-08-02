@@ -13,7 +13,7 @@ public class WorldGenerator {
 		for (int x = 0; x < nodes.length; x++) {
 			for (int y = 0; y < nodes[x].length; y++) {
 				WorldMaterial mat = WorldMaterial.GRASS;
-				float h = (float) (0.5f * (noise.noise(x / 10f, y / 10f) + 1));
+				float h = (float) (0.5f * (noise.noise(x / 30f, y / 30f) + 1));
 				// h is now between 0 and 1
 
 				if (h < 0.4) {

@@ -3,15 +3,16 @@ package de.felk.StrategyGame;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.opengl.GL11.glLoadIdentity;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 
 import org.lwjgl.opengl.Display;
 
+import de.felk.JOpenAL.SoundManager;
 import de.felk.StrategyGame.network.Connection;
 import de.felk.StrategyGame.network.Server;
 import de.felk.StrategyGame.packets.Packet;
@@ -29,24 +30,36 @@ public class Game {
 	private Server server;
 	private Connection testConnection;
 
+	private final int FRAMERATE = 60;
+
 	public Game() {
 
-		World world = WorldGenerator.getNew(500, MathHelper.getRandomSeed());
-		server = new Server(port, world);
-		connectToLocalServer();
+		start();
 
-		RenderEngine.init(800, 600);
+		World world = WorldGenerator.getNew(200, MathHelper.getRandomSeed());
+
+		try {
+			server = new Server(port, world);
+		} catch (BindException e) {
+			System.err.println("Port is already in use: " + port);
+			e.printStackTrace();
+			stop();
+			System.exit(-1); // TODO this looks bad
+		}
+		connectToLocalServer();
 
 		long lastTime = System.nanoTime();
 		while (!isStopRequested()) {
-			mainloop((System.nanoTime() - lastTime) / 1000000000d);
+			double diftime = (System.nanoTime() - lastTime) / 1000000000d;
 			lastTime = System.nanoTime();
+			mainloop(diftime);
 		}
 
-		// cleanup
-		server.stopThread();
-		testConnection.close();
+	}
 
+	public void start() {
+		RenderEngine.init(1280, 720);
+		SoundManager.createAL();
 	}
 
 	public void mainloop(double time) {
@@ -63,10 +76,10 @@ public class Game {
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glLoadIdentity();
 		if (world != null) {
 			world.render();
 		}
+		Display.sync(FRAMERATE);
 		Display.update();
 
 		if (Display.isCloseRequested()) {
@@ -89,6 +102,14 @@ public class Game {
 
 	public void stop() {
 		stopRequested = true;
+		SoundManager.shutdown();
+		Display.destroy();
+		if (server != null) {
+			server.stopThread();
+		}
+		if (testConnection != null) {
+			testConnection.close();
+		}
 	}
 
 	public boolean isStopRequested() {
